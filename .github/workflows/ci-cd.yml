@@ -1,53 +1,88 @@
-name: ci
+name: CI/CD Pipeline for Frontend and Backend
 
 on:
   push:
     branches:
-      - main
-  pull_request:
+      - jaiye/ecr-prject
 
 jobs:
-  frontend-unit-tests:
+  build:
+    name: Build Images
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Install frontend modules
-      run: npm run install:frontend
-    - name: Run frontend unit tests 🧪
-      run: npm run test:frontend:unit
-  api-tests:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.JAIYE_AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.JAIYE_AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Login to ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push backend image to Amazon ECR
+      id: build-and-push-backend
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: my-app-repo
+      run: |
+        echo "$ECR_REGISTRY/$ECR_REPOSITORY:backend-${GITHUB_RUN_NUMBER}"
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:backend-${GITHUB_RUN_NUMBER} -f Dockerfile.backend .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-${GITHUB_RUN_NUMBER}
+        echo "$ECR_REGISTRY" > ecr_registry.txt
+    - name: Build, tag, and push frontend image to Amazon ECR
+      id: build-and-push-frontend
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: frontend-backend
+      run: |
+        echo "$ECR_REGISTRY/$ECR_REPOSITORY:frontend-${GITHUB_RUN_NUMBER}"
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:frontend-${GITHUB_RUN_NUMBER} -f Dockerfile.frontend .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-${GITHUB_RUN_NUMBER}
+    - name: Upload ECR Registry
+      uses: actions/upload-artifact@v2
+      with:
+        name: ecr-registry
+        path: ecr_registry.txt
+
+  deploy:
+    name: Deploy to Dev
     runs-on: ubuntu-latest
+    needs: build
+    env:
+      ECR_REPOSITORY: frontend-backend
+      DIRECTORY: my-app
+      COMPOSE: compose.yml
+      
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Install Backend modules
-        uses: cypress-io/github-action@v5
-        with:
-          install-command: npm run install:backend
-          runTests: false
-      - name: Install Frontend modules
-        uses: cypress-io/github-action@v5
-        with:
-          install-command: npm run install:frontend
-          runTests: false
-      - name: Run API tests 🧪
-        uses: cypress-io/github-action@v5
-        with:
-          start: npm run start:frontend, npm run start:server
-          command: npm run test:api
-  frontend-tests:
-    needs: frontend-unit-tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Install Frontend modules
-        uses: cypress-io/github-action@v5
-        with:
-          install-command: npm run install:frontend
-          runTests: false
-      - name: Run Frontend UI tests 🧪
-        uses: cypress-io/github-action@v5
-        with:
-          start: npm run start:frontend
-          command: npm run test:frontend
+    - name: Download ECR Registry
+      uses: actions/download-artifact@v2
+      with:
+        name: ecr-registry
+        path: .
+    - name: Read ECR Registry
+      run: |
+        ECR_REGISTRY=$(cat ecr_registry.txt)
+        echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV
+    - name: SSH login to EC2 Instance
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.JAIYE_HOST }}
+        username: ${{ secrets.JAIYE_USERNAME }}
+        key: ${{ secrets.JAIYE_KEY }}
+        port: ${{ secrets.PORT }}
+        envs: GITHUB_RUN_NUMBER,ECR_REGISTRY,ECR_REPOSITORY,DIRECTORY,COMPOSE
+        script: |
+          cd $DIRECTORY && yq -y -i '.services.backend.image = "${ECR_REGISTRY}/${ECR_REPOSITORY}:backend-${GITHUB_RUN_NUMBER}"' $COMPOSE && \
+          yq -y -i '.services.frontend.image = "${ECR_REGISTRY}/${ECR_REPOSITORY}:frontend-${GITHUB_RUN_NUMBER}"' $COMPOSE && \
+          docker compose up --build --force-recreate -d
+          if [[ $? == 0 ]]; then
+            echo "Deployment Successful!!!"
+          else
+            echo "Error!!!!! can not recreate service update"
+            exit 1
+          fi

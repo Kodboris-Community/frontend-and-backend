@@ -13,3 +13,7 @@
 
 # misc
 .DS_Store
+
+#compose file for local testing
+compose.local.yaml
+ci-cd.yml
