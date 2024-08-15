@@ -86,7 +86,7 @@ jobs:
           echo "COMPOSE: $COMPOSE"
           cd $DIRECTORY && yq -y -i '.services.backend.image = "${ECR_REGISTRY}/${ECR_REPOSITORY}:backend-${GITHUB_RUN_NUMBER}"' $COMPOSE && \
           yq -y -i '.services.frontend.image = "${ECR_REGISTRY}/${ECR_REPOSITORY}:frontend-${GITHUB_RUN_NUMBER}"' $COMPOSE && \
-          docker compose up --build --force-recreate
+          docker compose up --build --force-recreate -d
           if [[ $? == 0 ]]; then
             echo "Deployment Successful!!!"
           else
