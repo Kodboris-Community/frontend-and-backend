@@ -28,7 +28,7 @@ jobs:
       id: build-and-push-backend
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: my-app-repo
+        ECR_REPOSITORY: frontend-backend
       run: |
         echo "$ECR_REGISTRY/$ECR_REPOSITORY:backend-${GITHUB_RUN_NUMBER}"
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:backend-${GITHUB_RUN_NUMBER} -f Dockerfile.backend .
@@ -77,6 +77,13 @@ jobs:
         port: ${{ secrets.PORT }}
         envs: GITHUB_RUN_NUMBER,ECR_REGISTRY,ECR_REPOSITORY,DIRECTORY,COMPOSE
         script: |
+          echo "Environment Variables:"
+          echo "GITHUB_TRIGGERING_ACTOR: $GITHUB_TRIGGERING_ACTOR"
+          echo "GITHUB_RUN_NUMBER: $GITHUB_RUN_NUMBER"
+          echo "ECR_REGISTRY: $ECR_REGISTRY"
+          echo "ECR_REPOSITORY: $ECR_REPOSITORY"
+          echo "DIRECTORY: $DIRECTORY"
+          echo "COMPOSE: $COMPOSE"
           cd $DIRECTORY && yq -y -i '.services.backend.image = "${ECR_REGISTRY}/${ECR_REPOSITORY}:backend-${GITHUB_RUN_NUMBER}"' $COMPOSE && \
           yq -y -i '.services.frontend.image = "${ECR_REGISTRY}/${ECR_REPOSITORY}:frontend-${GITHUB_RUN_NUMBER}"' $COMPOSE && \
           docker compose up --build --force-recreate -d
