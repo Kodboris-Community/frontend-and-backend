@@ -2,7 +2,7 @@ name: CI/CD Pipeline and AWS Balancer
 on:
   push:
     branches:
-      - taiwo/FrontBack
+      - taiwo/ecr-frontback
 
 jobs:
   build:
