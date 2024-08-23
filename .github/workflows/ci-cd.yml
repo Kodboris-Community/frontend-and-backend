@@ -30,7 +30,7 @@ jobs:
         ECR_REPOSITORY: frontend-backend
       run: |
         echo "$ECR_REGISTRY/$ECR_REPOSITORY:backend-${GITHUB_RUN_NUMBER}"
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:backend-${GITHUB_RUN_NUMBER} -f ./Backend .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:backend-${GITHUB_RUN_NUMBER} -f Backend .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:backend-${GITHUB_RUN_NUMBER}
         echo "$ECR_REGISTRY" > ecr_registry.txt
     - name: Build, tag, and push frontend image to Amazon ECR
@@ -40,7 +40,7 @@ jobs:
         ECR_REPOSITORY: frontend-backend
       run: |
         echo "$ECR_REGISTRY/$ECR_REPOSITORY:frontend-${GITHUB_RUN_NUMBER}"
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:frontend-${GITHUB_RUN_NUMBER} -f ./Dockerfrontend .
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:frontend-${GITHUB_RUN_NUMBER} -f Dockerfrontend .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-${GITHUB_RUN_NUMBER}
         echo "$ECR_REGISTRY" > ecr_registry.txt
     - name: Upload ECR Registry
