@@ -1,0 +1,20 @@
+# Backend Dockerfile
+FROM node:18.15.0-alpine
+
+# Set the working directory
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY frontend/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the application code
+COPY frontend/ .
+
+# Expose the port (3000 as per your instruction)
+EXPOSE 3000
+
+# Start the application
+CMD ["npm", "start"]

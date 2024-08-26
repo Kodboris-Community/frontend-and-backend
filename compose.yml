@@ -1,19 +1,12 @@
-version: '3.8'
-
+version: '3'
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Backend
     image: backend:${WORKFLOW_ID}
     ports:
-      - "3001:3001"
+      - "8081:3001"
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfrontend
     image: frontend:${WORKFLOW_ID}
     ports:
-      - "3000:3000"
+      - "8080:3000"
     depends_on:
       - backend

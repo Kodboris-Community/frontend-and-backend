@@ -15,4 +15,5 @@
 .DS_Store
 
 #compose file for local testing
-compose.local.yml
+docker-compose.yml
+
