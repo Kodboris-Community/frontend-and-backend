@@ -6,6 +6,8 @@
 /build
 /dist
 
+docker-compose.yml
+
 # cypress
 /cypress/screenshots
 /cypress/videos
@@ -14,6 +16,7 @@
 # misc
 .DS_Store
 
-# compose file for local testing
-docker-compose.yml
+#gitignor docker comopos
+compose.local.yml
+
 
