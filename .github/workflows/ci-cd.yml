@@ -84,13 +84,12 @@ jobs:
           echo "ECR_REPOSITORY: $ECR_REPOSITORY"
           echo "DIRECTORY: $DIRECTORY"
           echo "COMPOSE: $COMPOSE"
-          echo  "$GITHUB_TRIGGERING_ACTOR -Deployment Initiated- \nPulling build artifact $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_RUN_NUMBER}"
-          cd $DIRECTORY && yq -y -i '.services.backtend.image = "${ECR_REGISTRY}/${ECR_REPOSITORY}:${GITHUB_RUN_NUMBER}"' $COMPOSE && \
+          cd $DIRECTORY && yq -y -i '.services.backend.image = "${ECR_REGISTRY}/${ECR_REPOSITORY}:backend-${GITHUB_RUN_NUMBER}"' $COMPOSE && \
           yq -y -i '.services.frontend.image = "${ECR_REGISTRY}/${ECR_REPOSITORY}:frontend-${GITHUB_RUN_NUMBER}"' $COMPOSE && \
           docker compose up --build --force-recreate -d
           if [[ $? == 0 ]]; then
             echo "Deployment Successful!!!"
-            else
-              echo "Error!!!!! can not recreate service update"
-              exit 1
+          else
+            echo "Error!!!!! can not recreate service update"
+            exit 1
           fi
