@@ -43,7 +43,7 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:frontend-${GITHUB_RUN_NUMBER} -f Dockerfile.frontend .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:frontend-${GITHUB_RUN_NUMBER}
     - name: Upload ECR Registry
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ecr-registry
         path: ecr_registry.txt
