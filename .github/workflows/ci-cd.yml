@@ -84,14 +84,9 @@ jobs:
           echo "ECR_REPOSITORY: $ECR_REPOSITORY"
           echo "DIRECTORY: $DIRECTORY"
           echo "COMPOSE: $COMPOSE"
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 457667639266.dkr.ecr.us-east-1.amazonaws.com
           cd $DIRECTORY && yq -y -i '.services.backend.image = "${ECR_REGISTRY}/${ECR_REPOSITORY}:backend-${GITHUB_RUN_NUMBER}"' $COMPOSE && \
           yq -y -i '.services.frontend.image = "${ECR_REGISTRY}/${ECR_REPOSITORY}:frontend-${GITHUB_RUN_NUMBER}"' $COMPOSE && \
           docker compose up --build --force-recreate -d
-          if ! command -v aws &> /dev/null; then
-          echo "AWS CLI not found. Installing..."
-          sudo apt-get update && sudo apt-get install -y awscli
-          fi
           if [[ $? == 0 ]]; then
             echo "Deployment Successful!!!"
           else
